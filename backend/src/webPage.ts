@@ -17,11 +17,19 @@ export const MOBILE_DASHBOARD_HTML = `<!doctype html>
     .card { border: 1px solid #27304a; border-radius: 18px; background: #141b2e; padding: 18px; box-shadow: 0 10px 28px rgba(0,0,0,.18); }
     .card h2 { margin: 0 0 15px; font-size: 21px; }
     .lanes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .lane { border-radius: 14px; background: #0f1525; padding: 14px; }
+    .lane { border: 1px solid transparent; border-radius: 14px; background: #0f1525; padding: 14px; transition: border-color .18s ease, background .18s ease, box-shadow .18s ease; }
     .lane-label { color: #aeb6c7; font-size: 13px; }
     .speed { margin-top: 6px; font-size: 31px; font-weight: 750; letter-spacing: -0.04em; }
     .unit { margin-left: 4px; color: #aeb6c7; font-size: 13px; font-weight: 500; }
-    .recommendation { margin-top: 15px; border-radius: 12px; padding: 12px 14px; background: #202a45; font-size: 16px; font-weight: 650; }
+    .recommendation { margin-top: 15px; border: 1px solid transparent; border-radius: 12px; padding: 14px 16px; background: #202a45; font-size: 19px; font-weight: 800; letter-spacing: .01em; transition: border-color .18s ease, background .18s ease, color .18s ease; }
+    .card[data-recommendation="left"] .lane-left { border-color: #60a5fa; background: #10264a; box-shadow: 0 0 22px rgba(96,165,250,.18); }
+    .card[data-recommendation="left"] .lane-left .speed { color: #bfdbfe; }
+    .card[data-recommendation="left"] .recommendation { border-color: #60a5fa; background: #173665; color: #eff6ff; }
+    .card[data-recommendation="right"] .lane-right { border-color: #4ade80; background: #10291d; box-shadow: 0 0 22px rgba(74,222,128,.18); }
+    .card[data-recommendation="right"] .lane-right .speed { color: #bbf7d0; }
+    .card[data-recommendation="right"] .recommendation { border-color: #4ade80; background: #173d28; color: #ecfdf5; }
+    .card[data-recommendation="neutral"] .recommendation { border-color: #64748b; background: #273044; color: #e2e8f0; }
+    .card[data-recommendation="insufficient"] .recommendation { background: #202a45; color: #dbe2f1; }
     .meta { margin-top: 8px; color: #aeb6c7; font-size: 12px; }
     .warning { margin: 14px 0 0; border-radius: 12px; padding: 12px 14px; background: #382926; color: #ffd6cc; font-size: 13px; display: none; }
     button { width: 100%; margin-top: 16px; border: 0; border-radius: 14px; padding: 14px 16px; background: #eef2ff; color: #0b1020; font-size: 16px; font-weight: 700; }
@@ -38,8 +46,8 @@ export const MOBILE_DASHBOARD_HTML = `<!doctype html>
     <section class="card" data-direction="northbound">
       <h2>北上</h2>
       <div class="lanes">
-        <div class="lane"><div class="lane-label">左線</div><div class="speed"><span data-left>—</span><span class="unit">km/h</span></div></div>
-        <div class="lane"><div class="lane-label">右線</div><div class="speed"><span data-right>—</span><span class="unit">km/h</span></div></div>
+        <div class="lane lane-left"><div class="lane-label">左線</div><div class="speed"><span data-left>—</span><span class="unit">km/h</span></div></div>
+        <div class="lane lane-right"><div class="lane-label">右線</div><div class="speed"><span data-right>—</span><span class="unit">km/h</span></div></div>
       </div>
       <div class="recommendation" data-recommendation>讀取中</div>
       <div class="meta" data-meta></div>
@@ -47,8 +55,8 @@ export const MOBILE_DASHBOARD_HTML = `<!doctype html>
     <section class="card" data-direction="southbound">
       <h2>南下</h2>
       <div class="lanes">
-        <div class="lane"><div class="lane-label">左線</div><div class="speed"><span data-left>—</span><span class="unit">km/h</span></div></div>
-        <div class="lane"><div class="lane-label">右線</div><div class="speed"><span data-right>—</span><span class="unit">km/h</span></div></div>
+        <div class="lane lane-left"><div class="lane-label">左線</div><div class="speed"><span data-left>—</span><span class="unit">km/h</span></div></div>
+        <div class="lane lane-right"><div class="lane-label">右線</div><div class="speed"><span data-right>—</span><span class="unit">km/h</span></div></div>
       </div>
       <div class="recommendation" data-recommendation>讀取中</div>
       <div class="meta" data-meta></div>
@@ -62,9 +70,9 @@ export const MOBILE_DASHBOARD_HTML = `<!doctype html>
   const API = "/api/snow-tunnel";
   const REFRESH_MS = 60000;
   const labels = {
-    left: "建議：左線",
-    right: "建議：右線",
-    neutral: "建議：兩線差異不大",
+    left: "建議走左線 ←",
+    right: "建議走右線 →",
+    neutral: "兩線差異不大",
     insufficient: "資料不足，不提供建議"
   };
 
@@ -76,9 +84,11 @@ export const MOBILE_DASHBOARD_HTML = `<!doctype html>
 
   function renderDirection(name, data) {
     const el = document.querySelector('[data-direction="' + name + '"]');
+    const recommendation = data.recommendation ?? "insufficient";
+    el.dataset.recommendation = recommendation;
     el.querySelector("[data-left]").textContent = data.leftKph ?? "—";
     el.querySelector("[data-right]").textContent = data.rightKph ?? "—";
-    el.querySelector("[data-recommendation]").textContent = labels[data.recommendation] ?? labels.insufficient;
+    el.querySelector("[data-recommendation]").textContent = labels[recommendation] ?? labels.insufficient;
     const delta = data.deltaKph == null ? "" : "｜差 " + data.deltaKph + " km/h";
     el.querySelector("[data-meta]").textContent = "有效偵測點 " + data.validStationCount + "/" + data.expectedStationCount + delta;
   }
