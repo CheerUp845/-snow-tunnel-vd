@@ -1,10 +1,9 @@
-import { handleApiRequest, type SnapshotProvider } from "../backend/src/server.ts";
 import { SnowTunnelService } from "../backend/src/snowTunnel/service.ts";
 import { TdxClient } from "../backend/src/tdx/client.ts";
 
-let service: SnapshotProvider | undefined;
+let service: SnowTunnelService | undefined;
 
-function getService(): SnapshotProvider {
+function getService(): SnowTunnelService {
   if (service) return service;
 
   const clientId = process.env.TDX_CLIENT_ID?.trim();
@@ -18,13 +17,22 @@ function getService(): SnapshotProvider {
 }
 
 export default async function handler(request: any, response: any) {
+  if (request.method !== "GET") {
+    response.statusCode = 405;
+    response.setHeader("allow", "GET");
+    response.setHeader("content-type", "application/json; charset=utf-8");
+    response.end(JSON.stringify({ error: "method_not_allowed" }));
+    return;
+  }
+
   try {
-    const result = await handleApiRequest(getService(), request.method, "/api/snow-tunnel");
-    response.statusCode = result.statusCode;
-    for (const [name, value] of Object.entries(result.headers)) {
-      response.setHeader(name, value);
-    }
-    response.end(typeof result.body === "string" ? result.body : JSON.stringify(result.body));
+    const refreshValue = request.query?.refresh;
+    const forceRefresh = refreshValue === "1" || (Array.isArray(refreshValue) && refreshValue.includes("1"));
+    const snapshot = await getService().getSnapshot(forceRefresh);
+    response.statusCode = 200;
+    response.setHeader("content-type", "application/json; charset=utf-8");
+    response.setHeader("cache-control", "no-store");
+    response.end(JSON.stringify(snapshot));
   } catch {
     response.statusCode = 503;
     response.setHeader("content-type", "application/json; charset=utf-8");
