@@ -1,0 +1,14 @@
+{
+  "name": "snow-tunnel-backend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "start": "node --env-file-if-exists=.env dist/main.js",
+    "dev": "npm run build && node --env-file-if-exists=.env --watch dist/main.js"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0"
+  }
+}
