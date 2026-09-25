@@ -5,7 +5,7 @@ import { discoverSnowTunnelStations, indexLive } from "./stations.ts";
 
 const STATIC_STATION_TTL_MS = 24 * 60 * 60 * 1000;
 const LIVE_SNAPSHOT_TTL_MS = 55 * 1000;
-const STALE_AFTER_MS = 180 * 1000;
+const STALE_AFTER_MS = 6 * 60 * 1000;
 
 export interface SnowTunnelSnapshot {
   updatedAt: string;
@@ -79,9 +79,9 @@ export class SnowTunnelService {
     return snapshot;
   }
 
-  async getSnapshot(): Promise<SnowTunnelSnapshot> {
+  async getSnapshot(forceRefresh = false): Promise<SnowTunnelSnapshot> {
     const now = this.nowMs();
-    if (this.liveSnapshotCache && now < this.liveSnapshotCache.expiresAtMs) {
+    if (!forceRefresh && this.liveSnapshotCache && now < this.liveSnapshotCache.expiresAtMs) {
       return this.applyCurrentFreshness(this.liveSnapshotCache.value, now);
     }
 
